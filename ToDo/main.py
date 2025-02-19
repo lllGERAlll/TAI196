@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from typing import List
 
 app = FastAPI(
     title="Gestión de Tareas",
@@ -38,3 +39,11 @@ def main():
 @app.get("/tareas", tags=["Tareas"])
 def get_tareas():
     return tareas
+
+#Endpoint para obtener una tarea por su id
+@app.get("/tareas/{tarea_id}", tags=["Obtener tarea específica"])
+def get_tarea(tarea_id: int):
+    for tarea in tareas:
+        if tarea["id"] == tarea_id:
+            return tarea
+    raise HTTPException(status_code=404, detail="Tarea no encontrada")
