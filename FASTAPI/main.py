@@ -23,6 +23,7 @@ usuarios = [
     {"id": 4, "nombre": "Estrella", "edad": 20, "correo": "estrella@example.com"},
 ]
 
+#EndPoint para el inicio de la API
 @app.get("/", tags=["Inicio"])
 def main():
     return {"Hola FastAPI": "Gerardo"}
