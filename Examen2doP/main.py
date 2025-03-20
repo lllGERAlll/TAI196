@@ -13,7 +13,7 @@ app = FastAPI(
 class modelEnvio(BaseModel):
     cp: str
     destino: str
-    peso: float
+    peso: int
 
 envios = [
     {"cp": "12345", "destino": "Cancun", "peso": 10},
