@@ -2,24 +2,19 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from typing import Optional, List
 from pydantic import BaseModel
-from modelPydantic import modelUsuario, modelAuth
+from modelsPydantic import modelUsuario, modelAuth
 from genToken import createToken
 from middleWares import BearerJWT
-
-
-#Modelo para la validación de datos
-class modelUsuario(BaseModel):
-    id: int
-    nombre: str
-    edad: int
-    correo: str
-
+from DB.conexion import Session, engine, Base
+from models.modelsDB import User
 
 app = FastAPI(
     title="Mi primera API-196",
     description="Gerardo Ligorio Zea",
-    version="1.0.2"
+    version="1.0.3"
 )
+
+Base.metadata.create_all(bind=engine) #Levantar las tablas en la BD
 
 usuarios = [
     {"id": 1, "nombre": "Gerardo", "edad": 20, "correo": "gerardo@example.com"},
@@ -48,15 +43,21 @@ def login(autorizado:modelAuth): #Función para la autenticación
 def ConsultarTodos():
     return usuarios
 
-#endpoint para agregar un usuario por su id
+#Endpoint para agregar usuarios
 @app.post("/usuarios/", response_model = modelUsuario, tags=["Operaciones CRUD"])
-def AgregarUsuario(usuarioNuevo: modelUsuario):  # Usa el modelo Usuario en lugar de dict
-    for usr in usuarios:
-        if usr["id"] == usuarioNuevo.id:
-            raise HTTPException(status_code=400, detail="El usuario ya existe")
+def AgregarUsuario(usuarioNuevo: modelUsuario):
+    db = Session()
+    try:
+        db.add(User(**usuarioNuevo.model_dump()))
+        db.commit()
+        return JSONResponse(status_code=201, content={"mensaje": "Usuario guardado", "usuario": usuarioNuevo.model_dump()})
     
-    usuarios.append(usuarioNuevo)  
-    return usuarioNuevo
+    except Exception as e:
+        db.rollback()
+        return JSONResponse(status_code=400, content={"mensaje": "No se guardó", "Excepción": str(e)})
+    
+    finally:
+        db.close()
 
 #Endpoint para actualizar un usuario por su id
 @app.put("/usuarios/{id}", response_model = modelUsuario, tags=["Operaciones CRUD"])
