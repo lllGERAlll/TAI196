@@ -72,13 +72,45 @@ def AgregarUsuario(usuarioNuevo: modelUsuario):
     finally:
         db.close()
 
-""" #Endpoint para actualizar un usuario por su id
-@app.put("/usuarios/{id}", response_model = modelUsuario, tags=["Operaciones CRUD"])
-def actualizarUsuario(id:int, usuario_actualizado: modelUsuario):
+#Endpoint para actualizar un usuario por su id
+@app.put("/usuarios/{usuario_id}", response_model=modelUsuario, tags=["Operaciones CRUD"])
+def ActualizarUsuario(usuario_id: int, usuarioActualizado: modelUsuario):
+    db = Session()
+    try:
+        usuario = db.query(User).filter(User.id == usuario_id).first()
+        if not usuario:
+            return JSONResponse(status_code=404, content={"mensaje": "Usuario no encontrado"})
+        
+        for key, value in usuarioActualizado.model_dump().items():
+            setattr(usuario, key, value)
+        db.commit()
+        return JSONResponse(status_code=200, content={"mensaje": "Usuario actualizado", "usuario": usuarioActualizado.model_dump()})
+    
+    except Exception as y:
+        db.rollback()
+        return JSONResponse(status_code=400, content={"mensaje": "No se pudo actualizar el usuario", "Excepción": str(y)})
+    finally:
+        db.close()
 
-#Endpoint para eliminar un usuario por su id
-@app.delete("/usuarios/{id}", tags=["Operaciones CRUD"])
-def eliminarUsuario(id:int): """
+#Endpoint para eliminar un usuario
+@app.delete("/usuarios/{usuario_id}", tags=["Operaciones CRUD"])
+def EliminarUsuario(usuario_id: int):
+    db = Session()
+    try:
+        usuario = db.query(User).filter(User.id == usuario_id).first()
+        if not usuario:
+            return JSONResponse(status_code=404, content={"mensaje": "Usuario no encontrado"})
+        
+        db.delete(usuario)
+        db.commit()
+        return JSONResponse(status_code=200, content={"mensaje": "Usuario eliminado"})
+    
+    except Exception as z:
+        db.rollback()
+        return JSONResponse(status_code=400, content={"mensaje": "No se pudo eliminar el usuario", "Excepción": str(z)})
+    
+    finally:
+        db.close()
 
 #Endpoint para generar el token
 @app.post('/auth', tags=['Autenticación']) #Decorador para el endpoint
